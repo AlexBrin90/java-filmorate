@@ -16,9 +16,9 @@ import java.util.*;
 @RequestMapping("/users")
 public class UserController {
 
-    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMMM yyyy 'года'", new Locale("ru", "RU"));
+    private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMMM yyyy 'года'", new Locale("ru", "RU"));
 
-    Map<Long, User> users = new HashMap<>();
+    private Map<Long, User> users = new HashMap<>();
 
     @GetMapping
     public Collection<User> getAll() {

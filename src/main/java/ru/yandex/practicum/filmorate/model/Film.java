@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -11,6 +12,8 @@ import java.time.LocalDate;
 @Data
 public class Film {
 
+    public static final LocalDate DATE_OF_BIRTH_CINEMA = LocalDate.of(1895, 12, 28);
+
     private Long id;
 
     @NotNull
@@ -21,7 +24,13 @@ public class Film {
     @NotBlank(message = "WARN: Поле не может содержать только пробелы или быть пустым")
     private String description;
 
+
     private LocalDate releaseDate;
 
     private int duration;
+
+    @AssertTrue(message = "дата релиза не может быть раньше 28 декабря 1895 года")
+    public boolean isReleaseDateValid() {
+        return releaseDate != null && !releaseDate.isBefore(DATE_OF_BIRTH_CINEMA);
+    }
 }

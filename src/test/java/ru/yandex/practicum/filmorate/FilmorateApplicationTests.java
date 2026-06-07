@@ -77,14 +77,11 @@ class FilmorateApplicationTests {
 
     @Test
     void testFilmCreateReleaseDateBeforeCinemaBirth() {
-        FilmController controller = new FilmController();
         Film film = new Film();
-        film.setName("Ancient Film");
-        film.setDescription("Very old");
-        film.setReleaseDate(LocalDate.of(1895, 12, 27));
-        film.setDuration(90);
-        assertThrows(ValidationException.class, () -> controller.create(film),
-                "releaseDate раньше 28.12.1895 года - ValidationException");
+        film.setReleaseDate(LocalDate.of(1890, 1, 1)); // раньше 28.12.1895
+
+        assertFalse(film.isReleaseDateValid(),
+                "Дата релиза раньше 28 декабря 1895 года должна быть невалидной");
     }
 
     @Test

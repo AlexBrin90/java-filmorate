@@ -17,10 +17,8 @@ import java.util.*;
 @RequestMapping("/films")
 public class FilmController {
 
-    public static final LocalDate DATE_OF_BIRTH_CINEMA = LocalDate.of(1895, 12, 28);
-
-    Map<Long, Film> films = new HashMap<>();
-    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMMM yyyy 'года'", new Locale("ru", "RU"));
+    private Map<Long, Film> films = new HashMap<>();
+    private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMMM yyyy 'года'", new Locale("ru", "RU"));
 
     @GetMapping
     public Collection<Film> getAll() {
@@ -31,11 +29,6 @@ public class FilmController {
     public Film create(@Valid @RequestBody Film film) {
         log.info("Добавляем новый фильм {}", film.getName());
 
-        if (film.getReleaseDate().isBefore(DATE_OF_BIRTH_CINEMA)) {
-            String errMess = "Дата релиза фильма не может быть раньше " + DATE_OF_BIRTH_CINEMA.format(fmt);
-            log.warn(errMess);
-            throw new ValidationException(errMess);
-        }
         if (film.getDuration() < 0) {
             String errMess = "Продолжительность фильма не может быть меньше 0 минут";
             log.warn(errMess);
@@ -51,7 +44,6 @@ public class FilmController {
 
     @PutMapping
     public Film update(@Valid @RequestBody Film uFilm) {
-
         log.info("Начинаем обновлять информацию о фильме:");
 
         if (uFilm.getId() == null) {
