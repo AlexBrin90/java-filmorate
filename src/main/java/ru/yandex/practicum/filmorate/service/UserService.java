@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class UserService {
-    final private UserStorage inMemoryUserStorage;
+    private final UserStorage inMemoryUserStorage;
 
     @Autowired
     public UserService(UserStorage inMemoryUserStorage) {
