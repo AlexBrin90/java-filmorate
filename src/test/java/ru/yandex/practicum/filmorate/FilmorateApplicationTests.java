@@ -12,6 +12,11 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +27,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FilmorateApplicationTests {
 
     private static Validator validator;
+
+    private final InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
+    private final InMemoryUserStorage userStorage = new InMemoryUserStorage();
+    private final FilmService filmService = new FilmService(filmStorage, userStorage);
+    private final UserService userService = new UserService(userStorage);
+    private final FilmController filmController = new FilmController(filmStorage, filmService);
+    private final UserController userController = new UserController(userStorage, userService);
 
     @BeforeAll
     static void setUpValidator() {
@@ -86,33 +98,30 @@ class FilmorateApplicationTests {
 
     @Test
     void testFilmCreateNegativeDuration() {
-        FilmController controller = new FilmController();
         Film film = new Film();
         film.setName("Test");
         film.setDescription("Test");
         film.setReleaseDate(LocalDate.of(2010, 1, 1));
         film.setDuration(-5);
 
-        assertThrows(ValidationException.class, () -> controller.create(film),
+        assertThrows(ValidationException.class, () -> filmController.create(film),
                 "Отрицательная duration - ValidationException");
     }
 
     @Test
     void testFilmUpdateWithoutId() {
-        FilmController controller = new FilmController();
         Film film = new Film();
         film.setName("Updated");
         film.setDescription("Updated description");
         film.setReleaseDate(LocalDate.of(2010, 1, 1));
         film.setDuration(120);
 
-        assertThrows(ConditionsNotMetException.class, () -> controller.update(film),
+        assertThrows(ConditionsNotMetException.class, () -> filmController.update(film),
                 "Обновление без ID - ConditionsNotMetException");
     }
 
     @Test
     void testFilmUpdateNotFound() {
-        FilmController controller = new FilmController();
         Film film = new Film();
         film.setId(999L);
         film.setName("Updated");
@@ -120,7 +129,7 @@ class FilmorateApplicationTests {
         film.setReleaseDate(LocalDate.of(2010, 1, 1));
         film.setDuration(120);
 
-        assertThrows(NotFoundException.class, () -> controller.update(film),
+        assertThrows(NotFoundException.class, () -> filmController.update(film),
                 "Обновление несуществующего фильма - NotFoundException");
     }
 
@@ -162,33 +171,30 @@ class FilmorateApplicationTests {
 
     @Test
     void testUserCreateNameFromLoginIfEmpty() {
-        UserController controller = new UserController();
         User user = new User();
         user.setEmail("test@mail.com");
         user.setLogin("testlogin");
         user.setName(null);
 
-        User created = controller.create(user);
+        User created = userController.create(user);
         assertEquals("testlogin", created.getName(),
                 "Если name пустое, оно должно браться из login");
     }
 
     @Test
     void testUserCreateBirthdayInFuture() {
-        UserController controller = new UserController();
         User user = new User();
         user.setEmail("test@mail.com");
         user.setLogin("testlogin");
         user.setName("Test User");
         user.setBirthday(LocalDate.now().plusDays(1));
 
-        assertThrows(ValidationException.class, () -> controller.create(user),
+        assertThrows(ValidationException.class, () -> userController.create(user),
                 "birthday в будущем - ValidationException");
     }
 
     @Test
     void testUserUpdateNotFound() {
-        UserController controller = new UserController();
         User user = new User();
         user.setId(999L);
         user.setEmail("test@mail.com");
@@ -196,7 +202,7 @@ class FilmorateApplicationTests {
         user.setName("Test User");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(NotFoundException.class, () -> controller.update(user),
+        assertThrows(NotFoundException.class, () -> userController.update(user),
                 "Обновление несуществующего пользователя - NotFoundException");
     }
 }

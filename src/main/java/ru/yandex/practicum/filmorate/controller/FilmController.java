@@ -1,78 +1,61 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-
-import java.time.format.DateTimeFormatter;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import java.util.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
 
-    private Map<Long, Film> films = new HashMap<>();
-    private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMMM yyyy 'года'", new Locale("ru", "RU"));
+    private final FilmStorage filmStorage;
+    private final FilmService filmService;
+
+    @Autowired
+    public FilmController(FilmStorage filmStorage, FilmService filmService) {
+        this.filmStorage = filmStorage;
+        this.filmService = filmService;
+    }
 
     @GetMapping
     public Collection<Film> getAll() {
-        return films.values();
+        return filmStorage.getAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        log.info("Добавляем новый фильм {}", film.getName());
-
-        if (film.getDuration() < 0) {
-            String errMess = "Продолжительность фильма не может быть меньше 0 минут";
-            log.warn(errMess);
-            throw new ValidationException(errMess);
-            //Фильмы, длительностью до 1 минуты существуют - https://vkvideo.ru/@club8495133 - да, это прям фильмы))))
-        }
-
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.info("Фильм {} успешно добавлен. ID {}", film.getName(), film.getId());
-        return film;
+        return filmStorage.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film uFilm) {
-        log.info("Начинаем обновлять информацию о фильме:");
-
-        if (uFilm.getId() == null) {
-            String errMess = "ID должен быть указан";
-            log.warn(errMess);
-            throw new ConditionsNotMetException(errMess);
-        }
-
-        if (films.containsKey(uFilm.getId())) {
-            Film oFilm = films.get(uFilm.getId());
-            log.info("Обновляем данные о фильме {}", oFilm.getName());
-            Optional.ofNullable(uFilm.getDescription()).ifPresent(oFilm::setDescription);
-            Optional.of(uFilm.getName()).ifPresent(oFilm::setName);
-            Optional.ofNullable(uFilm.getDuration()).ifPresent(oFilm::setDuration);
-            Optional.ofNullable(uFilm.getReleaseDate()).ifPresent(oFilm::setReleaseDate);
-            log.info("Данные о фильме успешно обновлены {}", oFilm);
-            return oFilm;
-        }
-        String errMess = "Фильм с id = " + uFilm.getId() + " не найден";
-        log.warn(errMess);
-        throw new NotFoundException(errMess);
+        return filmStorage.update(uFilm);
     }
 
-    private long getNextId() {
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @GetMapping("/{id}")
+    public Film getById(@PathVariable Long id) {
+        return filmStorage.getById(id);
     }
 
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<String> addLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.addLike(userId, id);
+        return ResponseEntity.ok("Лайк поставлен");
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<String> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.deleteLike(userId, id);
+        return ResponseEntity.ok("Лайк убран");
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getPopFilms(count);
+    }
 }
