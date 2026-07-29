@@ -16,7 +16,6 @@ public class FilmService {
     private final FilmStorage inMemoryFilmStorage;
     private final UserStorage inMemoryUserStorage;
 
-    @Autowired
     public FilmService(FilmStorage inMemoryFilmStorage, UserStorage inMemoryUserStorage) {
         this.inMemoryFilmStorage = inMemoryFilmStorage;
         this.inMemoryUserStorage = inMemoryUserStorage;
@@ -50,34 +49,4 @@ public class FilmService {
                 .limit(count)
                 .toList();
     }
-
-    /*
-    public void addDislike(Long userId, Long filmId) {
-        Film film = inMemoryFilmStorage.getById(filmId);
-
-        if (film.getDislikes().contains(userId)) {  // поставить дизлайк
-            throw new ConditionsNotMetException("Пользователь уже поставил дизлайк фильму");
-        }
-        film.getDislikes().add(userId);
-        log.info("Пользователь {} поставил дизлайк фильму {}",
-                inMemoryUserStorage.getById(userId).getName(), inMemoryFilmStorage.getById(filmId).getName());
-    }
-
-    public void deleteDislike(Long userId, Long filmId) { // удалить дизлайк
-        Film film = inMemoryFilmStorage.getById(filmId);
-
-        if (!film.getDislikes().contains(userId)) {
-            throw new ConditionsNotMetException("Пользователь не ставил дизлайк фильму");
-        }
-        film.getDislikes().remove(userId);
-        log.info("Пользователь {} убрал дизлайк у фильма {}",
-                inMemoryUserStorage.getById(userId).getName(), inMemoryFilmStorage.getById(filmId).getName());
-    }
-
-    public List<Film> getTrashFilms(int count) {  // вывод худших фильмов по количеству дизлайков
-        return inMemoryFilmStorage.getAll().stream()
-                .sorted((f1, f2) -> f2.getDislikes().size() - f1.getDislikes().size())
-                .limit(count)
-                .toList();
-    } */
 }

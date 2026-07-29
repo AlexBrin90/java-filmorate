@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserStorage inMemoryUserStorage;
 
-    @Autowired
     public UserService(UserStorage inMemoryUserStorage) {
         this.inMemoryUserStorage = inMemoryUserStorage;
     }
