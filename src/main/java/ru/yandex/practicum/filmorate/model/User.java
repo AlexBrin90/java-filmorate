@@ -1,13 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 public class User {
@@ -15,15 +11,17 @@ public class User {
     private Long id;
 
     @Email
+    @NotNull
+    @NotBlank(message = "WARN: Email не может быть пустым")
     private String email;
 
     @Pattern(regexp = "\\S+", message = "WARN: Логин не может содержать пробелы")
     @NotNull
+    @NotBlank
     private String login;
 
     private String name;
 
+    @PastOrPresent(message = "WARN: Дата рождения не может быть в будущем")
     private LocalDate birthday;
-
-    private Map<Long, Friendship> friends = new HashMap<>();
 }

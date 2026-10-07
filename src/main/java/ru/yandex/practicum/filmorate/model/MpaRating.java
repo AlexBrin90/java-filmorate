@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class Genre {
+public class MpaRating {
     @NotNull
     private Integer id;
     private String name;
