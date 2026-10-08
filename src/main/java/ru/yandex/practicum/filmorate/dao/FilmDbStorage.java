@@ -11,8 +11,12 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Repository
@@ -53,6 +57,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                                                     ON fg.genre_id = g.id
                                                     WHERE fg.film_id = ? ORDER BY g.id
                                                     """;
+    private static final String FIND_GENRES_FOR_FILMS_QUERY = """
+                                                              SELECT fg.film_id, g.id, g.name
+                                                              FROM genres g
+                                                              JOIN film_genres fg
+                                                              ON fg.genre_id = g.id
+                                                              WHERE fg.film_id IN (%s)
+                                                              ORDER BY g.id
+                                                              """;
     private static final String ADD_LIKE_QUERY = """
                                                  MERGE INTO likes (film_id, user_id)
                                                  KEY(film_id, user_id)
@@ -112,7 +124,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Collection<Film> getAll() {
         List<Film> films = findMany(FIND_ALL_FILMS_QUERY);
-        films.forEach(this::loadGenres);
+        loadGenres(films);
         return films;
     }
 
@@ -141,7 +153,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         }
 
         List<Film> films = jdbc.query(FIND_POPULAR_QUERY, mapper, count);
-        films.forEach(this::loadGenres);
+        loadGenres(films);
         return films;
     }
 
@@ -158,12 +170,49 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 .sorted()
                 .toList();
 
-        for (Integer genreId : ids) {
-            jdbc.update(SAVE_GENRE_QUERY, filmId, genreId);
+        if (ids.isEmpty()) {
+            return;
         }
+
+        List<Object[]> batchArgs = ids.stream()
+                .map(genreId -> new Object[]{filmId, genreId})
+                .toList();
+
+        jdbc.batchUpdate(SAVE_GENRE_QUERY, batchArgs);
     }
 
     private void loadGenres(Film film) {
         film.setGenres(jdbc.query(FIND_GENRES_QUERY, genreMapper, film.getId()));
+    }
+
+    private void loadGenres(List<Film> films) {
+        if (films.isEmpty()) {
+            return;
+        }
+
+        List<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (filmIds.isEmpty()) {
+            return;
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
+        String query = String.format(FIND_GENRES_FOR_FILMS_QUERY, placeholders);
+
+        Map<Long, List<Genre>> genresByFilmId = new HashMap<>();
+        jdbc.query(query, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Genre genre = new Genre();
+            genre.setId(rs.getInt("id"));
+            genre.setName(rs.getString("name"));
+            genresByFilmId.computeIfAbsent(filmId, key -> new ArrayList<>()).add(genre);
+        }, filmIds.toArray());
+
+        for (Film film : films) {
+            film.setGenres(genresByFilmId.getOrDefault(film.getId(), List.of()));
+        }
     }
 }
