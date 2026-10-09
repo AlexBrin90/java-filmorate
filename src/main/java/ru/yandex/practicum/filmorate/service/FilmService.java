@@ -1,51 +1,76 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.util.Collection;
 import java.util.List;
 
-@Slf4j
 @Service
 public class FilmService {
-    private final FilmStorage inMemoryFilmStorage;
-    private final UserStorage inMemoryUserStorage;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
 
-    public FilmService(FilmStorage inMemoryFilmStorage, UserStorage inMemoryUserStorage) {
-        this.inMemoryFilmStorage = inMemoryFilmStorage;
-        this.inMemoryUserStorage = inMemoryUserStorage;
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage,
+                       GenreStorage genreStorage, MpaStorage mpaStorage) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.genreStorage = genreStorage;
+        this.mpaStorage = mpaStorage;
     }
 
-    public void addLike(Long userId, Long filmId) {  // поставить лайк
-        Film film = inMemoryFilmStorage.getById(filmId);
+    public Collection<Film> getAll() {
+        return filmStorage.getAll();
+    }
 
-        if (film.getLikes().contains(userId)) {
-            throw new ConditionsNotMetException("Пользователь уже поставил лайк фильму");
+    public Film create(Film film) {
+        validateReferences(film);
+        return filmStorage.create(film);
+    }
+
+    public Film update(Film film) {
+        validateReferences(film);
+        return filmStorage.update(film);
+    }
+
+    public Film getById(Long id) {
+        return filmStorage.getById(id);
+    }
+
+    public void addLike(Long userId, Long filmId) {
+        userStorage.getById(userId);
+        filmStorage.getById(filmId);
+        filmStorage.addLike(filmId, userId);
+    }
+
+    public void deleteLike(Long userId, Long filmId) {
+        userStorage.getById(userId);
+        filmStorage.getById(filmId);
+        filmStorage.deleteLike(filmId, userId);
+    }
+
+    public List<Film> getPopFilms(int count) {
+        return filmStorage.getPopular(count);
+    }
+
+    private void validateReferences(Film film) {
+        if (film.getMpa() != null && film.getMpa().getId() != null) {
+            film.setMpa(mpaStorage.getById(film.getMpa().getId()));
         }
-        film.getLikes().add(userId);
-        log.info("Пользователь {} поставил лайк фильму {}",
-                inMemoryUserStorage.getById(userId).getName(), inMemoryFilmStorage.getById(filmId).getName());
-    }
-
-    public void deleteLike(Long userId, Long filmId) { // удалить лайк
-        Film film = inMemoryFilmStorage.getById(filmId);
-
-        if (!film.getLikes().contains(userId)) {
-            throw new ConditionsNotMetException("Пользователь не ставил лайк фильму");
+        if (film.getGenres() != null) {
+            film.setGenres(film.getGenres().stream()
+                    .filter(genre -> genre != null && genre.getId() != null)
+                    .map(genre -> genreStorage.getById(genre.getId()))
+                    .distinct()
+                    .sorted(java.util.Comparator.comparing(Genre::getId))
+                    .toList());
         }
-        film.getLikes().remove(userId);
-        log.info("Пользователь {} убрал лайк у фильма {}",
-                inMemoryUserStorage.getById(userId).getName(), inMemoryFilmStorage.getById(filmId).getName());
-    }
-
-    public List<Film> getPopFilms(int count) {  // вывод популярных фильмов по количеству лайков
-        return inMemoryFilmStorage.getAll().stream()
-                .sorted((f1, f2) -> f2.getLikes().size() - f1.getLikes().size())
-                .limit(count)
-                .toList();
     }
 }
