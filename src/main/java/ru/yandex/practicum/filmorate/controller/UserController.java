@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -43,15 +44,15 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<String> addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<Map<String, String>> addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addToFriends(id, friendId);
-        return ResponseEntity.ok("Пользователь добавлен в друзья");
+        return ResponseEntity.ok(Map.of("message", "Пользователь добавлен в друзья"));
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<String> deleteFromFriends(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<Map<String, String>> deleteFromFriends(@PathVariable Long id, @PathVariable Long friendId) {
         userService.deleteFromFriends(id, friendId);
-        return ResponseEntity.ok("Пользователь удален из друзей");
+        return ResponseEntity.ok(Map.of("message", "Пользователь удален из друзей"));
     }
 
     @GetMapping("/{id}/friends")
