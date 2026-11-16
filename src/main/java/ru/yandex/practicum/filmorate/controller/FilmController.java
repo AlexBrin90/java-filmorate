@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
@@ -39,15 +40,15 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<String> addLike(@PathVariable Long id, @PathVariable Long userId) {
+    public ResponseEntity<Map<String, String>> addLike(@PathVariable Long id, @PathVariable Long userId) {
         filmService.addLike(userId, id);
-        return ResponseEntity.ok("Лайк поставлен");
+        return ResponseEntity.ok(Map.of("message", "Лайк поставлен"));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<String> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+    public ResponseEntity<Map<String, String>> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
         filmService.deleteLike(userId, id);
-        return ResponseEntity.ok("Лайк убран");
+        return ResponseEntity.ok(Map.of("message", "Лайк убран"));
     }
 
     @GetMapping("/popular")
