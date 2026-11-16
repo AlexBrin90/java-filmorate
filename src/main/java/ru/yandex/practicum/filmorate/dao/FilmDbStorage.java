@@ -21,63 +21,74 @@ import java.util.Objects;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
-    private static final String FIND_FILM_BY_ID_QUERY =  """
-                                                         SELECT f.*, m.name AS mpa_name
-                                                         FROM films f
-                                                         JOIN mpa_ratings m
-                                                         ON m.id = f.mpa_id
-                                                         WHERE f.id = ?
-                                                         """;
+    private static final String FIND_FILM_BY_ID_QUERY = """
+            SELECT f.*, m.name AS mpa_name
+            FROM films f
+            JOIN mpa_ratings m
+            ON m.id = f.mpa_id
+            WHERE f.id = ?
+            """;
     private static final String FIND_ALL_FILMS_QUERY = """
-                                                       SELECT f.*, m.name AS mpa_name
-                                                       FROM films f
-                                                       JOIN mpa_ratings m
-                                                       ON m.id = f.mpa_id
-                                                       ORDER BY f.id
-                                                       """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films f
+            JOIN mpa_ratings m
+            ON m.id = f.mpa_id
+            ORDER BY f.id
+            """;
     private static final String INSERT_FILM_QUERY = """
-                                               INSERT INTO films(name, description, release_date, duration, mpa_id)
-                                               VALUES (?, ?, ?, ?, ?)
-                                               """;
+            INSERT INTO films(name, description, release_date, duration, mpa_id)
+            VALUES (?, ?, ?, ?, ?)
+            """;
     private static final String UPDATE_FILM_QUERY = """
-                                                UPDATE films SET name = ?, description = ?, release_date = ?,
-                                                duration = ?, mpa_id = ?
-                                               WHERE id = ?
-                                               """;
+             UPDATE films SET name = ?, description = ?, release_date = ?,
+             duration = ?, mpa_id = ?
+            WHERE id = ?
+            """;
     private static final String DELETE_GENRES_QUERY = "DELETE FROM film_genres WHERE film_id = ?";
-    private static final String SAVE_GENRE_QUERY =  """
-                                                    MERGE INTO film_genres (film_id, genre_id)
-                                                    KEY(film_id, genre_id)
-                                                    VALUES (?, ?)
-                                                    """;
+    private static final String SAVE_GENRE_QUERY = """
+            MERGE INTO film_genres (film_id, genre_id)
+            KEY(film_id, genre_id)
+            VALUES (?, ?)
+            """;
     private static final String FIND_GENRES_QUERY = """
-                                                    SELECT g.id, g.name
-                                                    FROM genres g
-                                                    JOIN film_genres fg
-                                                    ON fg.genre_id = g.id
-                                                    WHERE fg.film_id = ? ORDER BY g.id
-                                                    """;
+            SELECT g.id, g.name
+            FROM genres g
+            JOIN film_genres fg
+            ON fg.genre_id = g.id
+            WHERE fg.film_id = ? ORDER BY g.id
+            """;
     private static final String FIND_GENRES_FOR_FILMS_QUERY = """
-                                                              SELECT fg.film_id, g.id, g.name
-                                                              FROM genres g
-                                                              JOIN film_genres fg
-                                                              ON fg.genre_id = g.id
-                                                              WHERE fg.film_id IN (%s)
-                                                              ORDER BY g.id
-                                                              """;
+            SELECT fg.film_id, g.id, g.name
+            FROM genres g
+            JOIN film_genres fg
+            ON fg.genre_id = g.id
+            WHERE fg.film_id IN (%s)
+            ORDER BY g.id
+            """;
     private static final String ADD_LIKE_QUERY = """
-                                                 MERGE INTO likes (film_id, user_id)
-                                                 KEY(film_id, user_id)
-                                                 VALUES (?, ?)
-                                                 """;
+            MERGE INTO likes (film_id, user_id)
+            KEY(film_id, user_id)
+            VALUES (?, ?)
+            """;
     private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String FIND_POPULAR_QUERY = """
-                                                     SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
-                                                     FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
-                                                     LEFT JOIN likes l ON l.film_id = f.id
-                                                     GROUP BY f.id, m.name
-                                                     ORDER BY likes_count DESC, f.id LIMIT ?
-                                                     """;
+            SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
+            FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
+            LEFT JOIN likes l ON l.film_id = f.id
+            GROUP BY f.id, m.name
+            ORDER BY likes_count DESC, f.id LIMIT ?
+            """;
+
+    private static final String FIND_COMMON_FILMS_QUERY = """ 
+            SELECT f.*, m.name AS mpa_name, COUNT(l3.user_id) AS likes_count
+            FROM likes l1 JOIN films f ON f.id = l1.film_id
+            JOIN mpa_ratings m ON m.id = f.mpa_id
+            JOIN likes l2 ON l1.film_id = l2.film_id
+            JOIN likes l3 ON l1.film_id = l3.film_id
+            WHERE l1.user_id = ? AND l2.user_id = ?
+            GROUP BY f.id, m.name
+            ORDER BY likes_count DESC, l1.film_id
+            """;
     private final GenreRowMapper genreMapper;
 
     public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmMapper, GenreRowMapper genreMapper) {
@@ -86,13 +97,20 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> films = jdbc.query(FIND_COMMON_FILMS_QUERY, mapper, userId, friendId);
+        loadGenres(films);
+        return films;
+    }
+
+    @Override
     public Film create(Film film) {
         long id = insert(INSERT_FILM_QUERY,
-                         film.getName(),
-                         film.getDescription(),
-                         Date.valueOf(film.getReleaseDate()),
-                         film.getDuration(),
-                         film.getMpa().getId());
+                film.getName(),
+                film.getDescription(),
+                Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpa().getId());
 
         saveGenres(id, film.getGenres());
 
@@ -105,12 +123,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             throw new ConditionsNotMetException("Для обновления нужно указать id фильма");
         }
         int rows = update(UPDATE_FILM_QUERY,
-                          film.getName(),
-                          film.getDescription(),
-                          Date.valueOf(film.getReleaseDate()),
-                          film.getDuration(),
-                          film.getMpa().getId(),
-                          film.getId());
+                film.getName(),
+                film.getDescription(),
+                Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpa().getId(),
+                film.getId());
 
         if (rows == 0) {
             throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
