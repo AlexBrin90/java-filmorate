@@ -78,7 +78,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             GROUP BY f.id, m.name
             ORDER BY likes_count DESC, f.id LIMIT ?
             """;
-    private static final String FIND_COMMON_FILMS_QUERY = """ 
+    private static final String FIND_COMMON_FILMS_QUERY = """
             SELECT f.*, m.name AS mpa_name, COUNT(l3.user_id) AS likes_count
             FROM likes l1 JOIN films f ON f.id = l1.film_id
             JOIN mpa_ratings m ON m.id = f.mpa_id
