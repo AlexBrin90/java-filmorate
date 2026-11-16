@@ -78,6 +78,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                                                      GROUP BY f.id, m.name
                                                      ORDER BY likes_count DESC, f.id LIMIT ?
                                                      """;
+    private static final String FIND_FILMS_BY_IDS_QUERY = """
+                                                          SELECT f.*, m.name AS mpa_name
+                                                          FROM films AS f
+                                                          JOIN mpa_ratings AS m
+                                                          ON m.id = f.mpa_id
+                                                          WHERE f.id IN (%s)
+                                                          ORDER BY f.id
+                                                          """;
     private final GenreRowMapper genreMapper;
 
     public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmMapper, GenreRowMapper genreMapper) {
@@ -214,5 +222,28 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         for (Film film : films) {
             film.setGenres(genresByFilmId.getOrDefault(film.getId(), List.of()));
         }
+    }
+
+    @Override
+    public List<Film> getByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> filmIds = ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (filmIds.isEmpty()) {
+            return List.of();
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
+        String query = String.format(FIND_FILMS_BY_IDS_QUERY, placeholders);
+
+        List<Film> films = findMany(query, filmIds.toArray());
+        loadGenres(films);
+        return films;
     }
 }
