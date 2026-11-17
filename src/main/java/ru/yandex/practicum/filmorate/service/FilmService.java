@@ -66,6 +66,12 @@ public class FilmService {
     }
 
     public List<Film> getPopFilms(int count, Integer genreId, Integer year) {
+        if (genreId != null) {
+            genreStorage.getById(genreId);
+        }
+        if (year != null && year < 1895) {
+            throw new ConditionsNotMetException("Год не может быть меньше 1895");
+        }
         return filmStorage.getPopular(count, genreId, year);
     }
 
