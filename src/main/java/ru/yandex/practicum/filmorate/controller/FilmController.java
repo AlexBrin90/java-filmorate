@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -32,6 +33,12 @@ public class FilmController {
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
         return filmService.update(film);
+    }
+
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Map<String, String>> deleteFilm(@PathVariable Long filmId){
+        filmService.delete(filmId);
+        return ResponseEntity.ok(Map.of("message", "Фильм удален"));
     }
 
     @GetMapping("/{id}")

@@ -96,6 +96,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             GROUP BY f.id, m.name
             ORDER BY likes_count DESC, l1.film_id
             """;
+
+    private static final String DELETE_FILM = """
+            DELETE FROM films WHERE id = ?""";
+
+
     private final GenreRowMapper genreMapper;
 
     public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmMapper, GenreRowMapper genreMapper) {
@@ -180,6 +185,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         List<Film> films = jdbc.query(FIND_POPULAR_QUERY, mapper, count);
         loadGenres(films);
         return films;
+    }
+
+    @Override
+    public void deleteFilm(Long filmId) {
+        jdbc.update(DELETE_FILM, filmId);
     }
 
     private void saveGenres(Long filmId, List<Genre> genres) {
