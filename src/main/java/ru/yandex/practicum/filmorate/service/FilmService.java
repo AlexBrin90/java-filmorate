@@ -36,7 +36,7 @@ public class FilmService {
         return filmStorage.create(film);
     }
 
-    public void delete(Long filmId){
+    public void delete(Long filmId) {
         filmStorage.deleteFilm(filmId);
     }
 
