@@ -17,37 +17,37 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private static final String FIND_ALL_USERS_QUERY = "SELECT * FROM users ORDER BY id";
     private static final String FIND_USER_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
     private static final String INSERT_USER_QUERY = """
-                                                    INSERT INTO users(email, login, name, birthday)
-                                                    VALUES (?, ?, ?, ?)
-                                                    """;
+            INSERT INTO users(email, login, name, birthday)
+            VALUES (?, ?, ?, ?)
+            """;
     private static final String UPDATE_USER_QUERY = """
-                                                    UPDATE users
-                                                    SET email = ?, login = ?, name = ?, birthday = ?
-                                                    WHERE id = ?
-                                                    """;
+            UPDATE users
+            SET email = ?, login = ?, name = ?, birthday = ?
+            WHERE id = ?
+            """;
     private static final String ADD_FRIEND_QUERY = """
-                                                   MERGE INTO friendships (user_id, friend_id)
-                                                   KEY(user_id, friend_id)
-                                                   VALUES (?, ?)
-                                                   """;
+            MERGE INTO friendships (user_id, friend_id)
+            KEY(user_id, friend_id)
+            VALUES (?, ?)
+            """;
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
     private static final String FIND_FRIENDS_QUERY = """
-                                                     SELECT u.*
-                                                     FROM users u
-                                                     JOIN friendships f
-                                                     ON f.friend_id = u.id
-                                                     WHERE f.user_id = ?
-                                                     ORDER BY u.id
-                                                     """;
+            SELECT u.*
+            FROM users u
+            JOIN friendships f
+            ON f.friend_id = u.id
+            WHERE f.user_id = ?
+            ORDER BY u.id
+            """;
     private static final String FIND_COMMON_FRIENDS_QUERY = """
-                                                            SELECT u.*
-                                                            FROM users u
-                                                            JOIN friendships f1
-                                                            ON f1.friend_id = u.id AND f1.user_id = ?
-                                                            JOIN friendships f2
-                                                            ON f2.friend_id = u.id AND f2.user_id = ?
-                                                            ORDER BY u.id
-                                                            """;
+            SELECT u.*
+            FROM users u
+            JOIN friendships f1
+            ON f1.friend_id = u.id AND f1.user_id = ?
+            JOIN friendships f2
+            ON f2.friend_id = u.id AND f2.user_id = ?
+            ORDER BY u.id
+            """;
 
     public UserDbStorage(JdbcTemplate jdbc, UserRowMapper userMapper) {
         super(jdbc, userMapper);
@@ -62,10 +62,10 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     public User create(User user) {
         String name = user.getName() == null || user.getName().isBlank() ? user.getLogin() : user.getName();
         long id = insert(INSERT_USER_QUERY,
-                         user.getEmail(),
-                         user.getLogin(),
-                         name,
-                         user.getBirthday() == null ? null : Date.valueOf(user.getBirthday()));
+                user.getEmail(),
+                user.getLogin(),
+                name,
+                user.getBirthday() == null ? null : Date.valueOf(user.getBirthday()));
         return getById(id);
     }
 
@@ -76,11 +76,11 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
         }
         String name = user.getName() == null || user.getName().isBlank() ? user.getLogin() : user.getName();
         int rows = update(UPDATE_USER_QUERY,
-                          user.getEmail(),
-                          user.getLogin(),
-                          name,
-                          user.getBirthday() == null ? null : Date.valueOf(user.getBirthday()),
-                          user.getId());
+                user.getEmail(),
+                user.getLogin(),
+                name,
+                user.getBirthday() == null ? null : Date.valueOf(user.getBirthday()),
+                user.getId());
 
         if (rows == 0) {
             throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");

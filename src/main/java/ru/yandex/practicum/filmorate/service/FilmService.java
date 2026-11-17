@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
@@ -72,5 +73,14 @@ public class FilmService {
                     .sorted(java.util.Comparator.comparing(Genre::getId))
                     .toList());
         }
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        if (userId.equals(friendId)) {
+            throw new ValidationException("Нельзя сравнивать пользователя с самим собой");
+        }
+        userStorage.getById(userId);
+        userStorage.getById(friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 }
