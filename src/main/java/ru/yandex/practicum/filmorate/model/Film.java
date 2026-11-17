@@ -44,4 +44,6 @@ public class Film {
     @Valid
     @NotNull
     private MpaRating mpa;
+
+    private List<Director> directors = new ArrayList<>();
 }
