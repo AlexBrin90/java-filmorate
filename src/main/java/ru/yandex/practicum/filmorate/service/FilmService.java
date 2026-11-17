@@ -57,8 +57,8 @@ public class FilmService {
         filmStorage.deleteLike(filmId, userId);
     }
 
-    public List<Film> getPopFilms(int count) {
-        return filmStorage.getPopular(count);
+    public List<Film> getPopFilms(int count, Integer genreId, Integer year) {
+        return filmStorage.getPopular(count, genreId, year);
     }
 
     private void validateReferences(Film film) {

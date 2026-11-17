@@ -72,20 +72,25 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             """;
     private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String FIND_POPULAR_QUERY = """
-                                                     SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
-                                                     FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
-                                                     LEFT JOIN likes l ON l.film_id = f.id
-                                                     GROUP BY f.id, m.name
-                                                     ORDER BY likes_count DESC, f.id LIMIT ?
-                                                     """;
+            SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
+            FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
+            LEFT JOIN likes l ON l.film_id = f.id
+            WHERE (? IS NULL OR EXISTS (
+            SELECT 1
+            FROM film_genres AS fg
+            WHERE fg.film_id = f.id AND fg.genre_id = ?
+            )) AND (? IS NULL OR EXTRACT(YEAR FROM f.release_date) = ?)
+            GROUP BY f.id, m.name
+            ORDER BY likes_count DESC, f.id LIMIT ?
+            """;
     private static final String FIND_FILMS_BY_IDS_QUERY = """
-                                                          SELECT f.*, m.name AS mpa_name
-                                                          FROM films AS f
-                                                          JOIN mpa_ratings AS m
-                                                          ON m.id = f.mpa_id
-                                                          WHERE f.id IN (%s)
-                                                          ORDER BY f.id
-                                                          """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films AS f
+            JOIN mpa_ratings AS m
+            ON m.id = f.mpa_id
+            WHERE f.id IN (%s)
+            ORDER BY f.id
+            """;
     private static final String FIND_COMMON_FILMS_QUERY = """
             SELECT f.*, m.name AS mpa_name, COUNT(l3.user_id) AS likes_count
             FROM likes l1 JOIN films f ON f.id = l1.film_id
@@ -172,12 +177,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopular(int count) {
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
         if (count < 0) {
             throw new ConditionsNotMetException("Количество фильмов не может быть отрицательным");
         }
 
-        List<Film> films = jdbc.query(FIND_POPULAR_QUERY, mapper, count);
+        List<Film> films = jdbc.query(FIND_POPULAR_QUERY, mapper, genreId, genreId, year, year, count);
         loadGenres(films);
         return films;
     }
