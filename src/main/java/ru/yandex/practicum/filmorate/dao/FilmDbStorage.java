@@ -85,43 +85,43 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ORDER BY likes_count DESC, f.id LIMIT ?
             """;
     private static final String FIND_FILMS_BY_IDS_QUERY = """
-                                                          SELECT f.*, m.name AS mpa_name
-                                                          FROM films AS f
-                                                          JOIN mpa_ratings AS m
-                                                          ON m.id = f.mpa_id
-                                                          WHERE f.id IN (%s)
-                                                          ORDER BY f.id
-                                                          """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films AS f
+            JOIN mpa_ratings AS m
+            ON m.id = f.mpa_id
+            WHERE f.id IN (%s)
+            ORDER BY f.id
+            """;
     private static final String DELETE_DIRECTORS_QUERY = "DELETE FROM film_directors WHERE film_id = ?";
     private static final String SAVE_DIRECTOR_QUERY = """
-                                                     MERGE INTO film_directors (film_id, director_id)
-                                                     KEY(film_id, director_id) VALUES (?, ?)
-                                                     """;
+            MERGE INTO film_directors (film_id, director_id)
+            KEY(film_id, director_id) VALUES (?, ?)
+            """;
     private static final String FIND_DIRECTORS_FOR_FILMS_QUERY = """
-                                                               SELECT fd.film_id, d.id, d.name
-                                                               FROM directors d
-                                                               JOIN film_directors fd ON fd.director_id = d.id
-                                                               WHERE fd.film_id IN (%s)
-                                                               ORDER BY d.id
-                                                               """;
+            SELECT fd.film_id, d.id, d.name
+            FROM directors d
+            JOIN film_directors fd ON fd.director_id = d.id
+            WHERE fd.film_id IN (%s)
+            ORDER BY d.id
+            """;
     private static final String FIND_BY_DIRECTOR_YEAR_QUERY = """
-                                                            SELECT f.*, m.name AS mpa_name
-                                                            FROM films f
-                                                            JOIN mpa_ratings m ON m.id = f.mpa_id
-                                                            JOIN film_directors fd ON fd.film_id = f.id
-                                                            WHERE fd.director_id = ?
-                                                            ORDER BY EXTRACT(YEAR FROM f.release_date), f.id
-                                                            """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films f
+            JOIN mpa_ratings m ON m.id = f.mpa_id
+            JOIN film_directors fd ON fd.film_id = f.id
+            WHERE fd.director_id = ?
+            ORDER BY EXTRACT(YEAR FROM f.release_date), f.id
+            """;
     private static final String FIND_BY_DIRECTOR_LIKES_QUERY = """
-                                                             SELECT f.*, m.name AS mpa_name
-                                                             FROM films f
-                                                             JOIN mpa_ratings m ON m.id = f.mpa_id
-                                                             JOIN film_directors fd ON fd.film_id = f.id
-                                                             LEFT JOIN likes l ON l.film_id = f.id
-                                                             WHERE fd.director_id = ?
-                                                             GROUP BY f.id, m.name
-                                                             ORDER BY COUNT(l.user_id) DESC, f.id
-                                                             """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films f
+            JOIN mpa_ratings m ON m.id = f.mpa_id
+            JOIN film_directors fd ON fd.film_id = f.id
+            LEFT JOIN likes l ON l.film_id = f.id
+            WHERE fd.director_id = ?
+            GROUP BY f.id, m.name
+            ORDER BY COUNT(l.user_id) DESC, f.id
+            """;
     private static final String FIND_COMMON_FILMS_QUERY = """
             SELECT f.*, m.name AS mpa_name, COUNT(l3.user_id) AS likes_count
             FROM likes l1 JOIN films f ON f.id = l1.film_id
