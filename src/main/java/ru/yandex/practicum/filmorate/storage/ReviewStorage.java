@@ -18,7 +18,7 @@ public interface ReviewStorage {
 
     void saveVote(Long reviewId, Long userId, boolean helpful);
 
-    void deleteVote(Long reviewId, Long userId);
+    void deleteLike(Long reviewId, Long userId);
 
     void deleteDislike(Long reviewId, Long userId);
 }

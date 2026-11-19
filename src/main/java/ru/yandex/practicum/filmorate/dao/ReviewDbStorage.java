@@ -36,8 +36,10 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
             MERGE INTO review_votes (review_id, user_id, vote) KEY (review_id, user_id)
             VALUES (?, ?, ?)
             """;
-    private static final String DELETE_VOTE_QUERY = "DELETE FROM review_votes WHERE review_id = ? AND user_id = ?";
-    private static final String DELETE_DISLIKE_QUERY = DELETE_VOTE_QUERY + " AND vote = -1";
+    private static final String DELETE_VOTE_QUERY = """
+            DELETE FROM review_votes
+            WHERE review_id = ? AND user_id = ? AND vote = ?
+            """;
 
     public ReviewDbStorage(JdbcTemplate jdbc, ReviewRowMapper mapper) {
         super(jdbc, mapper);
@@ -79,12 +81,12 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     }
 
     @Override
-    public void deleteVote(Long reviewId, Long userId) {
-        update(DELETE_VOTE_QUERY, reviewId, userId);
+    public void deleteLike(Long reviewId, Long userId) {
+        update(DELETE_VOTE_QUERY, reviewId, userId, 1);
     }
 
     @Override
     public void deleteDislike(Long reviewId, Long userId) {
-        update(DELETE_DISLIKE_QUERY, reviewId, userId);
+        update(DELETE_VOTE_QUERY, reviewId, userId, -1);
     }
 }

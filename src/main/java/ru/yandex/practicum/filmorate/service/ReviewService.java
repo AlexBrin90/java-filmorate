@@ -65,9 +65,9 @@ public class ReviewService {
         reviewStorage.saveVote(reviewId, userId, helpful);
     }
 
-    public void deleteVote(Long reviewId, Long userId) {
+    public void deleteLike(Long reviewId, Long userId) {
         validateVoteReferences(reviewId, userId);
-        reviewStorage.deleteVote(reviewId, userId);
+        reviewStorage.deleteLike(reviewId, userId);
     }
 
     public void deleteDislike(Long reviewId, Long userId) {
