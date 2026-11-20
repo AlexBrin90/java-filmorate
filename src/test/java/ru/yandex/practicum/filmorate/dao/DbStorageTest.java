@@ -1,3 +1,4 @@
+
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
@@ -202,29 +203,29 @@ class DbStorageTest {
         filmStorage.addLike(first.getId(), secondUser.getId());
         filmStorage.addLike(second.getId(), secondUser.getId());
 
-        List<Film> popular = filmStorage.getPopular(10);
+        List<Film> popular = filmStorage.getPopular(10, null, null);
         assertEquals(2, popular.size());
         assertEquals(first.getId(), popular.getFirst().getId());
         assertEquals(second.getId(), popular.getLast().getId());
-        assertEquals(first.getId(), filmStorage.getPopular(1).getFirst().getId());
+        assertEquals(first.getId(), filmStorage.getPopular(1, null, null).getFirst().getId());
 
         filmStorage.deleteLike(first.getId(), secondUser.getId());
         filmStorage.deleteLike(first.getId(), secondUser.getId());
-        popular = filmStorage.getPopular(10);
+        popular = filmStorage.getPopular(10, null, null);
         assertEquals(first.getId(), popular.getFirst().getId());
         assertEquals(second.getId(), popular.getLast().getId());
 
         filmStorage.deleteLike(first.getId(), firstUser.getId());
-        assertEquals(second.getId(), filmStorage.getPopular(1).getFirst().getId());
+        assertEquals(second.getId(), filmStorage.getPopular(1, null, null).getFirst().getId());
         filmStorage.deleteLike(second.getId(), secondUser.getId());
-        assertEquals(2, filmStorage.getPopular(10).size());
-        assertEquals(first.getId(), filmStorage.getPopular(1).getFirst().getId());
+        assertEquals(2, filmStorage.getPopular(10, null, null).size());
+        assertEquals(first.getId(), filmStorage.getPopular(1, null, null).getFirst().getId());
     }
 
     @Test
     void popularWithEmptyCatalogIsEmptyAndNegativeCountThrows() {
-        assertTrue(filmStorage.getPopular(10).isEmpty());
-        assertThrows(ConditionsNotMetException.class, () -> filmStorage.getPopular(-1));
+        assertTrue(filmStorage.getPopular(10, null, null).isEmpty());
+        assertThrows(ConditionsNotMetException.class, () -> filmStorage.getPopular(-1, null, null));
     }
 
     @Test

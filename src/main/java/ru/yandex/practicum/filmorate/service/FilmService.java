@@ -65,8 +65,14 @@ public class FilmService {
         filmStorage.deleteLike(filmId, userId);
     }
 
-    public List<Film> getPopFilms(int count) {
-        return filmStorage.getPopular(count);
+    public List<Film> getPopFilms(int count, Integer genreId, Integer year) {
+        if (genreId != null) {
+            genreStorage.getById(genreId);
+        }
+        if (year != null && year < 1895) {
+            throw new ConditionsNotMetException("Год не может быть меньше 1895");
+        }
+        return filmStorage.getPopular(count, genreId, year);
     }
 
     public List<Film> getByDirector(Long directorId, String sortBy) {
