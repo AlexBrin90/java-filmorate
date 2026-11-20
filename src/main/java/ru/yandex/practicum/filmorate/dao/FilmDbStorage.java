@@ -132,6 +132,29 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             GROUP BY f.id, m.name
             ORDER BY likes_count DESC, l1.film_id
             """;
+
+    private static final String FIND_BY_SEARCH_QUERY = """
+            SELECT f.*, m.name AS mpa_name, COUNT(DISTINCT l.user_id) AS likes_count
+            FROM films f
+            JOIN mpa_ratings m
+            ON m.id = f.mpa_id
+            LEFT JOIN likes l
+            ON l.film_id = f.id
+            WHERE %s
+            GROUP BY f.id, m.name
+            ORDER BY likes_count DESC, f.id
+            """;
+
+    private static final String SEARCH_BY_TITLE_ADD_TO_QUERY = "LOWER(f.name) LIKE ?";
+
+    private static final String SEARCH_BY_DIRECTOR_ADD_TO_QUERY = """
+            f.id IN (SELECT fd.film_id
+                     FROM film_directors fd
+                     JOIN directors d
+                     ON d.id = fd.director_id
+                     WHERE LOWER(d.name) LIKE ?)
+            """;
+
     private final GenreRowMapper genreMapper;
 
     public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmMapper, GenreRowMapper genreMapper) {
@@ -344,6 +367,36 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         String query = String.format(FIND_FILMS_BY_IDS_QUERY, placeholders);
 
         List<Film> films = findMany(query, filmIds.toArray());
+        loadGenres(films);
+        loadDirectors(films);
+        return films;
+    }
+
+    @Override
+    public List<Film> search(String query, boolean byTitle, boolean byDirector) {
+        List<String> conditions = new ArrayList<>();
+
+        if (byTitle) {
+            conditions.add(SEARCH_BY_TITLE_ADD_TO_QUERY);
+        }
+
+        if (byDirector) {
+            conditions.add(SEARCH_BY_DIRECTOR_ADD_TO_QUERY);
+        }
+
+        if (conditions.isEmpty()) {
+            return List.of();
+        }
+
+        String sql = String.format(FIND_BY_SEARCH_QUERY, String.join("OR", conditions));
+        String pattern = "%" + query.toLowerCase() + "%";
+        List<Object> params = new ArrayList<>();
+
+        for (int i = 0; i < conditions.size(); i++) {
+            params.add(pattern);
+        }
+
+        List<Film> films = jdbc.query(sql, mapper, params.toArray());
         loadGenres(films);
         loadDirectors(films);
         return films;
