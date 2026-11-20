@@ -388,7 +388,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             return List.of();
         }
 
-        String sql = String.format(FIND_BY_SEARCH_QUERY, String.join("OR", conditions));
+        String sql = String.format(FIND_BY_SEARCH_QUERY, String.join(" OR ", conditions));
         String pattern = "%" + query.toLowerCase() + "%";
         List<Object> params = new ArrayList<>();
 
