@@ -13,10 +13,7 @@ import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 @Service
 public class FilmService {
@@ -130,5 +127,30 @@ public class FilmService {
         userStorage.getById(userId);
         userStorage.getById(friendId);
         return filmStorage.getCommonFilms(userId, friendId);
+    }
+
+    public List<Film> search(String query, String by) {
+        if (query == null || query.isBlank()) {
+            throw new ConditionsNotMetException("Текст поиска не может быть пустым");
+        }
+
+        if (by == null || by.isBlank()) {
+            throw new ConditionsNotMetException("Поле поиска не может быть пустым");
+        }
+
+        Set<String> fields = new HashSet<>();
+        for (String field : by.split(",", -1)) {
+            String normalize = field.trim().toLowerCase();
+            if (normalize.isEmpty()) {
+                throw new ConditionsNotMetException("Поле поиска содержит пустой элемент");
+            }
+
+            if (!"title".equals(normalize) && !"director".equals(normalize)) {
+                throw new ConditionsNotMetException("Поле должно быть title или director");
+            }
+            fields.add(normalize);
+        }
+
+        return filmStorage.search(query.trim(), fields.contains("title"), fields.contains("director"));
     }
 }
