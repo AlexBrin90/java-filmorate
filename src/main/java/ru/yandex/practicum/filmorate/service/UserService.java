@@ -28,6 +28,10 @@ public class UserService {
         return userStorage.update(user);
     }
 
+    public void delete(Long userId) {
+        userStorage.deleteUser(userId);
+    }
+
     public User getById(Long id) {
         return userStorage.getById(id);
     }

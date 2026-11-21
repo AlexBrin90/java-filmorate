@@ -34,6 +34,12 @@ public class FilmController {
         return filmService.update(film);
     }
 
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Map<String, String>> deleteFilm(@PathVariable Long filmId) {
+        filmService.delete(filmId);
+        return ResponseEntity.ok(Map.of("message", "Фильм удален"));
+    }
+
     @GetMapping("/{id}")
     public Film getById(@PathVariable Long id) {
         return filmService.getById(id);

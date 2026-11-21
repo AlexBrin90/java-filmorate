@@ -43,6 +43,12 @@ public class UserController {
         return userService.getById(id);
     }
 
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
+        userService.delete(userId);
+        return ResponseEntity.ok(Map.of("message", "Пользователь удален"));
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<Map<String, String>> addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addToFriends(id, friendId);
