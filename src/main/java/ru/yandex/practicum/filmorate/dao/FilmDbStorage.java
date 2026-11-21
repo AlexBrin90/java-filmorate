@@ -72,20 +72,20 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             """;
     private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String FIND_POPULAR_QUERY = """
-                                                     SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
-                                                     FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
-                                                     LEFT JOIN likes l ON l.film_id = f.id
-                                                     GROUP BY f.id, m.name
-                                                     ORDER BY likes_count DESC, f.id LIMIT ?
-                                                     """;
+            SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
+            FROM films f JOIN mpa_ratings m ON m.id = f.mpa_id
+            LEFT JOIN likes l ON l.film_id = f.id
+            GROUP BY f.id, m.name
+            ORDER BY likes_count DESC, f.id LIMIT ?
+            """;
     private static final String FIND_FILMS_BY_IDS_QUERY = """
-                                                          SELECT f.*, m.name AS mpa_name
-                                                          FROM films AS f
-                                                          JOIN mpa_ratings AS m
-                                                          ON m.id = f.mpa_id
-                                                          WHERE f.id IN (%s)
-                                                          ORDER BY f.id
-                                                          """;
+            SELECT f.*, m.name AS mpa_name
+            FROM films AS f
+            JOIN mpa_ratings AS m
+            ON m.id = f.mpa_id
+            WHERE f.id IN (%s)
+            ORDER BY f.id
+            """;
     private static final String FIND_COMMON_FILMS_QUERY = """
             SELECT f.*, m.name AS mpa_name, COUNT(l3.user_id) AS likes_count
             FROM likes l1 JOIN films f ON f.id = l1.film_id
@@ -189,7 +189,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public void deleteFilm(Long filmId) {
-        jdbc.update(DELETE_FILM, filmId);
+        if (filmId == null) {
+            throw new ConditionsNotMetException("Для удаления нужно указать id фильма");
+        }
+        int rows = jdbc.update(DELETE_FILM, filmId);
+        if (rows == 0) {
+            throw new NotFoundException("Пользователь с id " + filmId + " не найден");
+        }
     }
 
     private void saveGenres(Long filmId, List<Genre> genres) {

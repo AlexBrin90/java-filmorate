@@ -119,6 +119,12 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     @Override
     public void deleteUser(Long userId) {
-        jdbc.update(DELETE_USER, userId);
+        if (userId == null) {
+            throw new ConditionsNotMetException("Для удаления пользователя нужно указать id");
+        }
+        int rows = jdbc.update(DELETE_USER, userId);
+        if (rows == 0) {
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+        }
     }
 }
