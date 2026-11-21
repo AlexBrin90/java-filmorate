@@ -145,14 +145,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ORDER BY likes_count DESC, f.id
             """;
 
-    private static final String SEARCH_BY_TITLE_ADD_TO_QUERY = "LOWER(f.name) LIKE ?";
+    private static final String SEARCH_BY_TITLE_ADD_TO_QUERY = "LOWER(f.name) LIKE ? ESCAPE '!'";
 
     private static final String SEARCH_BY_DIRECTOR_ADD_TO_QUERY = """
             f.id IN (SELECT fd.film_id
                      FROM film_directors fd
                      JOIN directors d
                      ON d.id = fd.director_id
-                     WHERE LOWER(d.name) LIKE ?)
+                     WHERE LOWER(d.name) LIKE ? ESCAPE '!')
             """;
 
     private final GenreRowMapper genreMapper;
@@ -389,7 +389,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         }
 
         String sql = String.format(FIND_BY_SEARCH_QUERY, String.join(" OR ", conditions));
-        String pattern = "%" + query.toLowerCase() + "%";
+        String pattern = "%" + escapeLikePattern(query.toLowerCase()) + "%";
         List<Object> params = new ArrayList<>();
 
         for (int i = 0; i < conditions.size(); i++) {
@@ -400,5 +400,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         loadGenres(films);
         loadDirectors(films);
         return films;
+    }
+
+    private String escapeLikePattern(String value) {
+        return value
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 }

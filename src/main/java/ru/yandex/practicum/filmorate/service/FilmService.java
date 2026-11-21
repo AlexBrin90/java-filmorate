@@ -135,20 +135,16 @@ public class FilmService {
         }
 
         Set<String> fields = new HashSet<>();
-        for (String field : by.split(",")) {
+        for (String field : by.split(",", -1)) {
             String normalize = field.trim().toLowerCase();
             if (normalize.isEmpty()) {
-                continue;
+                throw new ConditionsNotMetException("Поле поиска содержит пустой элемент");
             }
 
             if (!"title".equals(normalize) && !"director".equals(normalize)) {
                 throw new ConditionsNotMetException("Поле должно быть title или director");
             }
             fields.add(normalize);
-        }
-
-        if (fields.isEmpty()) {
-            throw new ConditionsNotMetException("Поле поиска не может быть пустым");
         }
 
         return filmStorage.search(query.trim(), fields.contains("title"), fields.contains("director"));
