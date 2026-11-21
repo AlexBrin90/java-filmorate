@@ -194,7 +194,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         }
         int rows = jdbc.update(DELETE_FILM, filmId);
         if (rows == 0) {
-            throw new NotFoundException("Пользователь с id " + filmId + " не найден");
+            throw new NotFoundException("Фильм с id " + filmId + " не найден");
         }
     }
 
