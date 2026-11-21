@@ -239,7 +239,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         if (rows == 0) {
             throw new NotFoundException("Фильм с id " + filmId + " не найден");
         }
-    }        
+    }
+    
     public List<Film> getByDirector(Long directorId, String sortBy) {
         String query = "likes".equals(sortBy) ? FIND_BY_DIRECTOR_LIKES_QUERY : FIND_BY_DIRECTOR_YEAR_QUERY;
         List<Film> films = findMany(query, directorId);
