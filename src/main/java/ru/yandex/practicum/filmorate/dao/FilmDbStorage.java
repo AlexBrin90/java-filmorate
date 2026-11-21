@@ -132,6 +132,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             GROUP BY f.id, m.name
             ORDER BY likes_count DESC, l1.film_id
             """;
+
+    private static final String DELETE_FILM = """
+            DELETE FROM films WHERE id = ?""";
+
+
     private final GenreRowMapper genreMapper;
 
     public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmMapper, GenreRowMapper genreMapper) {
@@ -226,6 +231,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
+    public void deleteFilm(Long filmId) {
+        if (filmId == null) {
+            throw new ConditionsNotMetException("Для удаления нужно указать id фильма");
+        }
+        int rows = jdbc.update(DELETE_FILM, filmId);
+        if (rows == 0) {
+            throw new NotFoundException("Фильм с id " + filmId + " не найден");
+        }
+    }
+
     public List<Film> getByDirector(Long directorId, String sortBy) {
         String query = "likes".equals(sortBy) ? FIND_BY_DIRECTOR_LIKES_QUERY : FIND_BY_DIRECTOR_YEAR_QUERY;
         List<Film> films = findMany(query, directorId);

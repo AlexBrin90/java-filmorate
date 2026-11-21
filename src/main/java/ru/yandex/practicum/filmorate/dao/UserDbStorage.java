@@ -49,6 +49,9 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             ORDER BY u.id
             """;
 
+    private static final String DELETE_USER = """
+            DELETE FROM users WHERE id = ?""";
+
     public UserDbStorage(JdbcTemplate jdbc, UserRowMapper userMapper) {
         super(jdbc, userMapper);
     }
@@ -112,5 +115,16 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     @Override
     public List<User> getCommonFriends(Long userId, Long otherId) {
         return jdbc.query(FIND_COMMON_FRIENDS_QUERY, mapper, userId, otherId);
+    }
+
+    @Override
+    public void deleteUser(Long userId) {
+        if (userId == null) {
+            throw new ConditionsNotMetException("Для удаления пользователя нужно указать id");
+        }
+        int rows = jdbc.update(DELETE_USER, userId);
+        if (rows == 0) {
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+        }
     }
 }
