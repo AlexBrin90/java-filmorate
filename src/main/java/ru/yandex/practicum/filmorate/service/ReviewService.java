@@ -1,34 +1,50 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserService userService;
     private final FilmService filmService;
+    private final FeedService feedService;
 
-    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService) {
+    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService, FeedService feedService) {
         this.reviewStorage = reviewStorage;
         this.userService = userService;
         this.filmService = filmService;
+        this.feedService = feedService;
     }
 
+    @Transactional
     public Review create(Review review) {
         if (review.getUserId() == null || review.getFilmId() == null) {
             throw new ConditionsNotMetException("Для отзыва нужно указать ID пользователя и фильма");
         }
         userService.getById(review.getUserId());
         filmService.getById(review.getFilmId());
+
+        feedService.addEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.ADD,
+                review.getReviewId()
+        );
+
         return reviewStorage.create(review);
     }
 
+    @Transactional
     public Review update(Review review) {
         Long reviewId = review.getReviewId();
         if (reviewId == null) {
@@ -37,13 +53,37 @@ public class ReviewService {
         if (!reviewStorage.update(review)) {
             throw reviewNotFound(reviewId);
         }
+
+        feedService.addEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.UPDATE,
+                review.getReviewId()
+        );
+
         return getById(reviewId);
     }
 
+    @Transactional
     public void delete(Long reviewId) {
+        Optional<Review> optionalReview = reviewStorage.getById(reviewId);
+
+        if (optionalReview.isEmpty()) {
+            throw reviewNotFound(reviewId);
+        }
+
+        Review review = optionalReview.get();
+
         if (!reviewStorage.delete(reviewId)) {
             throw reviewNotFound(reviewId);
         }
+
+        feedService.addEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.REMOVE,
+                reviewId
+        );
     }
 
     public Review getById(Long reviewId) {

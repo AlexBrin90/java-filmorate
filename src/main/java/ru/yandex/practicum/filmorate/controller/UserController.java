@@ -3,8 +3,10 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.FeedEvent;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FeedService;
 import ru.yandex.practicum.filmorate.service.RecommendationService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -17,10 +19,12 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final RecommendationService recommendationService;
+    private final FeedService feedService;
 
-    public UserController(UserService userService, RecommendationService recommendationService) {
+    public UserController(UserService userService, RecommendationService recommendationService, FeedService feedService) {
         this.userService = userService;
         this.recommendationService = recommendationService;
+        this.feedService = feedService;
     }
 
     @GetMapping
@@ -74,5 +78,10 @@ public class UserController {
     @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendations(@PathVariable Long id) {
         return recommendationService.getRecommendations(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<FeedEvent> getFeed(@PathVariable Long id){
+        return feedService.getFeed(id);
     }
 }
