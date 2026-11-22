@@ -81,7 +81,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/feed")
-    public List<FeedEvent> getFeed(@PathVariable Long id){
+    public List<FeedEvent> getFeed(@PathVariable Long id) {
         return feedService.getFeed(id);
     }
 }
