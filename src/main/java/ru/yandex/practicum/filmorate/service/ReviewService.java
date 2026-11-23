@@ -29,39 +29,50 @@ public class ReviewService {
     @Transactional
     public Review create(Review review) {
         if (review.getUserId() == null || review.getFilmId() == null) {
-            throw new ConditionsNotMetException("Для отзыва нужно указать ID пользователя и фильма");
+            throw new ConditionsNotMetException(
+                    "Для отзыва нужно указать ID пользователя и фильма"
+            );
         }
+
         userService.getById(review.getUserId());
         filmService.getById(review.getFilmId());
 
+        Review savedReview = reviewStorage.create(review);
+
         feedService.addEvent(
-                review.getUserId(),
+                savedReview.getUserId(),
                 EventType.REVIEW,
                 Operation.ADD,
-                review.getReviewId()
+                savedReview.getReviewId()
         );
 
-        return reviewStorage.create(review);
+        return savedReview;
     }
 
     @Transactional
     public Review update(Review review) {
         Long reviewId = review.getReviewId();
+
         if (reviewId == null) {
-            throw new ConditionsNotMetException("Для обновления нужно указать ID отзыва");
+            throw new ConditionsNotMetException(
+                    "Для обновления нужно указать ID отзыва"
+            );
         }
+
         if (!reviewStorage.update(review)) {
             throw reviewNotFound(reviewId);
         }
 
+        Review updatedReview = getById(reviewId);
+
         feedService.addEvent(
-                review.getUserId(),
+                updatedReview.getUserId(),
                 EventType.REVIEW,
                 Operation.UPDATE,
-                review.getReviewId()
+                updatedReview.getReviewId()
         );
 
-        return getById(reviewId);
+        return updatedReview;
     }
 
     @Transactional
@@ -72,11 +83,8 @@ public class ReviewService {
             throw reviewNotFound(reviewId);
         }
 
-        Review review = optionalReview.get();
-
-        if (!reviewStorage.delete(reviewId)) {
-            throw reviewNotFound(reviewId);
-        }
+        Review review = optionalReview.
+                orElseThrow(() -> reviewNotFound(reviewId));
 
         feedService.addEvent(
                 review.getUserId(),
