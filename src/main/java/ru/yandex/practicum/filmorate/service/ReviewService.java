@@ -83,8 +83,8 @@ public class ReviewService {
             throw reviewNotFound(reviewId);
         }
 
-        Review review = optionalReview.
-                orElseThrow(() -> reviewNotFound(reviewId));
+        Review review = optionalReview
+                .orElseThrow(() -> reviewNotFound(reviewId));
 
         feedService.addEvent(
                 review.getUserId(),
