@@ -92,6 +92,7 @@ public class ReviewService {
                 Operation.REMOVE,
                 reviewId
         );
+        reviewStorage.delete(reviewId);
     }
 
     public Review getById(Long reviewId) {
