@@ -1,10 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -14,11 +11,9 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserStorage userStorage;
-    private final FeedService feedService;
 
-    public UserService(UserStorage userStorage, FeedService feedService) {
+    public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
-        this.feedService = feedService;
     }
 
     public Collection<User> getAll() {
@@ -41,7 +36,6 @@ public class UserService {
         return userStorage.getById(id);
     }
 
-    @Transactional
     public void addToFriends(Long userId, Long friendId) {
         if (userId.equals(friendId)) {
             throw new ConditionsNotMetException("Нельзя добавлять себя в друзья");
@@ -49,16 +43,8 @@ public class UserService {
         userStorage.getById(userId);
         userStorage.getById(friendId);
         userStorage.addFriend(userId, friendId);
-
-        feedService.addEvent(
-                userId,
-                EventType.FRIEND,
-                Operation.ADD,
-                friendId
-        );
     }
 
-    @Transactional
     public void deleteFromFriends(Long userId, Long friendId) {
         if (userId.equals(friendId)) {
             throw new ConditionsNotMetException("Нельзя удалить себя из друзей");
@@ -66,13 +52,6 @@ public class UserService {
         userStorage.getById(userId);
         userStorage.getById(friendId);
         userStorage.deleteFriend(userId, friendId);
-
-        feedService.addEvent(
-                userId,
-                EventType.FRIEND,
-                Operation.REMOVE,
-                friendId
-        );
     }
 
     public List<User> getAllFriends(Long userId) {

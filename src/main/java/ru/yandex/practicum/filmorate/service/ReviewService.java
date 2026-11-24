@@ -1,98 +1,49 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserService userService;
     private final FilmService filmService;
-    private final FeedService feedService;
 
-    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService, FeedService feedService) {
+    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService) {
         this.reviewStorage = reviewStorage;
         this.userService = userService;
         this.filmService = filmService;
-        this.feedService = feedService;
     }
 
-    @Transactional
     public Review create(Review review) {
         if (review.getUserId() == null || review.getFilmId() == null) {
-            throw new ConditionsNotMetException(
-                    "Для отзыва нужно указать ID пользователя и фильма"
-            );
+            throw new ConditionsNotMetException("Для отзыва нужно указать ID пользователя и фильма");
         }
-
         userService.getById(review.getUserId());
         filmService.getById(review.getFilmId());
-
-        Review savedReview = reviewStorage.create(review);
-
-        feedService.addEvent(
-                savedReview.getUserId(),
-                EventType.REVIEW,
-                Operation.ADD,
-                savedReview.getReviewId()
-        );
-
-        return savedReview;
+        return reviewStorage.create(review);
     }
 
-    @Transactional
     public Review update(Review review) {
         Long reviewId = review.getReviewId();
-
         if (reviewId == null) {
-            throw new ConditionsNotMetException(
-                    "Для обновления нужно указать ID отзыва"
-            );
+            throw new ConditionsNotMetException("Для обновления нужно указать ID отзыва");
         }
-
         if (!reviewStorage.update(review)) {
             throw reviewNotFound(reviewId);
         }
-
-        Review updatedReview = getById(reviewId);
-
-        feedService.addEvent(
-                updatedReview.getUserId(),
-                EventType.REVIEW,
-                Operation.UPDATE,
-                updatedReview.getReviewId()
-        );
-
-        return updatedReview;
+        return getById(reviewId);
     }
 
-    @Transactional
     public void delete(Long reviewId) {
-        Optional<Review> optionalReview = reviewStorage.getById(reviewId);
-
-        if (optionalReview.isEmpty()) {
+        if (!reviewStorage.delete(reviewId)) {
             throw reviewNotFound(reviewId);
         }
-
-        Review review = optionalReview
-                .orElseThrow(() -> reviewNotFound(reviewId));
-
-        feedService.addEvent(
-                review.getUserId(),
-                EventType.REVIEW,
-                Operation.REMOVE,
-                reviewId
-        );
-        reviewStorage.delete(reviewId);
     }
 
     public Review getById(Long reviewId) {
