@@ -1,12 +1,11 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
@@ -22,14 +21,18 @@ public class FilmService {
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
     private final DirectorStorage directorStorage;
+    private final FeedService feedService;
+
 
     public FilmService(FilmStorage filmStorage, UserStorage userStorage,
-                       GenreStorage genreStorage, MpaStorage mpaStorage, DirectorStorage directorStorage) {
+                       GenreStorage genreStorage, MpaStorage mpaStorage,
+                       DirectorStorage directorStorage, FeedService feedService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.directorStorage = directorStorage;
+        this.feedService = feedService;
     }
 
     public Collection<Film> getAll() {
@@ -54,16 +57,32 @@ public class FilmService {
         return filmStorage.getById(id);
     }
 
+    @Transactional
     public void addLike(Long userId, Long filmId) {
         userStorage.getById(userId);
         filmStorage.getById(filmId);
         filmStorage.addLike(filmId, userId);
+
+        feedService.addEvent(
+                userId,
+                EventType.LIKE,
+                Operation.ADD,
+                filmId
+        );
     }
 
+    @Transactional
     public void deleteLike(Long userId, Long filmId) {
         userStorage.getById(userId);
         filmStorage.getById(filmId);
         filmStorage.deleteLike(filmId, userId);
+
+        feedService.addEvent(
+                userId,
+                EventType.LIKE,
+                Operation.REMOVE,
+                filmId
+        );
     }
 
     public List<Film> getPopFilms(int count, Integer genreId, Integer year) {
