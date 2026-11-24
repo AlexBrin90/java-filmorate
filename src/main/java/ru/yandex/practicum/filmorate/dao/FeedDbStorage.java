@@ -23,6 +23,14 @@ public class FeedDbStorage implements FeedStorage {
                fe.event_type, fe.operation, fe.entity_id
         FROM feed_events fe
         WHERE fe.user_id = ?
+        OR (
+            fe.event_type IN ('LIKE', 'REVIEW')
+            AND fe.user_id IN (
+                SELECT friend_id
+                FROM friendships
+                WHERE user_id = ?
+            )
+        )
         ORDER BY fe.timestamp ASC, fe.event_id ASC
         """;
 
@@ -48,6 +56,6 @@ public class FeedDbStorage implements FeedStorage {
 
     @Override
     public List<FeedEvent> getFeed(Long userId) {
-        return jdbc.query(FIND_FEED_QUERY, feedMapper, userId);
+        return jdbc.query(FIND_FEED_QUERY, feedMapper, userId, userId);
     }
 }
