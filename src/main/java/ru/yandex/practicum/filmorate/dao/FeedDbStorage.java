@@ -22,12 +22,15 @@ public class FeedDbStorage implements FeedStorage {
         SELECT fe.event_id, fe.timestamp, fe.user_id,
                fe.event_type, fe.operation, fe.entity_id
         FROM feed_events fe
-        WHERE fe.user_id IN (
-            SELECT friend_id
-            FROM friendships
-            WHERE user_id = ?
+        WHERE fe.user_id = ?
+        OR (
+            fe.event_type IN ('LIKE', 'REVIEW')
+            AND fe.user_id IN (
+                SELECT friend_id
+                FROM friendships
+                WHERE user_id = ?
+            )
         )
-        OR fe.user_id = ?
         ORDER BY fe.timestamp ASC, fe.event_id ASC
         """;
 
