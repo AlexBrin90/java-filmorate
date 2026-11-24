@@ -17,13 +17,19 @@ public class FeedDbStorage implements FeedStorage {
             VALUES (?, ?, ?, ?, ?)
             """;
 
+
     private static final String FIND_FEED_QUERY = """
-            SELECT event_id, timestamp, user_id,
-                   event_type, operation, entity_id
-            FROM feed_events
+        SELECT fe.event_id, fe.timestamp, fe.user_id,
+               fe.event_type, fe.operation, fe.entity_id
+        FROM feed_events fe
+        WHERE fe.user_id IN (
+            SELECT friend_id
+            FROM friendships
             WHERE user_id = ?
-            ORDER BY timestamp ASC, event_id ASC
-            """;
+        )
+        OR fe.user_id = ?
+        ORDER BY fe.timestamp ASC, fe.event_id ASC
+        """;
 
     private final JdbcTemplate jdbc;
     private final FeedRowMapper feedMapper;
@@ -47,6 +53,6 @@ public class FeedDbStorage implements FeedStorage {
 
     @Override
     public List<FeedEvent> getFeed(Long userId) {
-        return jdbc.query(FIND_FEED_QUERY, feedMapper, userId);
+        return jdbc.query(FIND_FEED_QUERY, feedMapper, userId, userId);
     }
 }

@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
@@ -26,8 +25,8 @@ public class FilmService {
 
 
     public FilmService(FilmStorage filmStorage, UserStorage userStorage,
-                       GenreStorage genreStorage, MpaStorage mpaStorage, DirectorStorage directorStorage,
-                       FeedStorage feedStorage, FeedService feedService) {
+                       GenreStorage genreStorage, MpaStorage mpaStorage,
+                       DirectorStorage directorStorage, FeedService feedService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
