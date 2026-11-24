@@ -25,8 +25,8 @@ public class FilmService {
 
 
     public FilmService(FilmStorage filmStorage, UserStorage userStorage,
-                       GenreStorage genreStorage, MpaStorage mpaStorage,
-                       DirectorStorage directorStorage, FeedService feedService) {
+                       GenreStorage genreStorage, MpaStorage mpaStorage, DirectorStorage directorStorage,
+                       FeedService feedService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
