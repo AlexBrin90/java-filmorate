@@ -1,7 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.FeedEvent;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -12,7 +13,6 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -20,6 +20,8 @@ public class UserController {
     private final UserService userService;
     private final RecommendationService recommendationService;
     private final FeedService feedService;
+
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     public UserController(UserService userService, RecommendationService recommendationService, FeedService feedService) {
         this.userService = userService;
@@ -34,12 +36,16 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        return userService.create(user);
+        User newUser = userService.create(user);
+        log.info("Пользователь с id = {} создан", newUser.getId());
+        return newUser;
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User user) {
-        return userService.update(user);
+        User updateUser = userService.update(user);
+        log.info("Пользователь с id = {} обновлен", updateUser.getId());
+        return updateUser;
     }
 
     @GetMapping("/{id}")
@@ -48,21 +54,21 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
+    public void deleteUser(@PathVariable Long userId) {
         userService.delete(userId);
-        return ResponseEntity.ok(Map.of("message", "Пользователь удален"));
+        log.info("Пользователь с id = {} удален", userId);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Map<String, String>> addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
+    public void addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addToFriends(id, friendId);
-        return ResponseEntity.ok(Map.of("message", "Пользователь добавлен в друзья"));
+        log.info("Пользователь {} добавил в друзья пользователя {}", id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Map<String, String>> deleteFromFriends(@PathVariable Long id, @PathVariable Long friendId) {
+    public void deleteFromFriends(@PathVariable Long id, @PathVariable Long friendId) {
         userService.deleteFromFriends(id, friendId);
-        return ResponseEntity.ok(Map.of("message", "Пользователь удален из друзей"));
+        log.info("Пользователь {} удалил из друзей пользователя {}", id, friendId);
     }
 
     @GetMapping("/{id}/friends")
