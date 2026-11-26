@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,8 @@ import java.util.List;
 public class DirectorController {
     private final DirectorService directorService;
 
+    private static final Logger log = LoggerFactory.getLogger(DirectorController.class);
+
     public DirectorController(DirectorService directorService) {
         this.directorService = directorService;
     }
@@ -35,16 +39,27 @@ public class DirectorController {
 
     @PostMapping
     public Director create(@Valid @RequestBody Director director) {
-        return directorService.create(director);
+        Director newDirector = directorService.create(director);
+        log.info("Режиссер {} c id = {} создан", newDirector.getName(), newDirector.getId());
+        return newDirector;
     }
 
     @PutMapping
     public Director update(@Valid @RequestBody Director director) {
-        return directorService.update(director);
+        Director updateDirector = directorService.update(director);
+        log.info("Режиссер c id = {} обновлен", updateDirector.getId());
+        return updateDirector;
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         directorService.delete(id);
+        log.info("Режиссер c id = {} удален", id);
     }
 }
+
+
+
+
+
+
